@@ -8,7 +8,7 @@ class Product < ActiveRecord::Base
 
   validate :check_released_at_text
 
-  after_save :save_released_at_text
+  before_save :save_released_at_text
 
   def price_in_dollars
     price_in_cents.to_d/100 if price_in_cents
