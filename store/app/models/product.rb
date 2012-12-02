@@ -4,6 +4,12 @@ class Product < ActiveRecord::Base
   has_many :taggings
   has_many :tags, through: :taggings
 
+  attr_writer :released_at_text
+
+  validate :check_released_at_text
+
+  after_save :save_released_at_text
+
   def price_in_dollars
     price_in_cents.to_d/100 if price_in_cents
   end
@@ -13,10 +19,18 @@ class Product < ActiveRecord::Base
   end
 
   def released_at_text
-    released_at.try(:strftime, "%Y-%m-%d %H:%M:%S")
+    @released_at_text || released_at.try(:strftime, "%Y-%m-%d %H:%M:%S")
   end
 
-  def released_at_text=(time)
-    self.released_at = Time.zone.parse(time) if time.present?
+  def save_released_at_text=(time)
+    self.released_at = Time.zone.parse(@released_at_text) if @released_at_text.present?
+  end
+
+  def check_released_at_text
+    if @released_at_text.present? && Time.zone.parse(@released_at_text).nil?
+      errors.add :released_at_text, "cannot be parsed"
+    end
+  rescue ArgumentError
+    errors.add :released_at_text, "is out of range"
   end
 end
